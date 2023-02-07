@@ -27,7 +27,8 @@ public:
     using SampleType = T;
     using BufferCont = std::vector<SampleType>;
 
-    WaveOut( int Device, size_t Channels, size_t SampleCount, uint32_t SamplesPerSec );
+    WaveOut( int Device, size_t Channels, size_t SampleCount, size_t BlockCount,
+             uint32_t SamplesPerSec );
     virtual ~WaveOut();
     WaveOut( WaveOut const & ) = delete;
     WaveOut( WaveOut&& ) = delete;
@@ -37,12 +38,12 @@ public:
     void Stop();
     [[nodiscard]] bool IsRunning() const { return !stopped_; }
 protected:
-    static constexpr size_t BufferCount = 2;
-
     WAVEFORMATEX waveFormat_;
     HWAVEOUT waveHandle_;
-    BufferCont waveData_[BufferCount];
-    WAVEHDR waveHeader_[BufferCount];
+    std::vector<BufferCont> waveData_;
+    std::vector<WAVEHDR> waveHeader_;
+    size_t blockCnt_;
+    size_t freeBlockCnt_;
 
     std::atomic<bool> stopReq_ { false };
     std::atomic<bool> stopped_ { false };
@@ -61,17 +62,16 @@ private:
 template<typename T = int16_t>
 class WaveOutCO : public WaveOut<T> {
 public:
-    using BufferCont = typename WaveOut<T>::BufferCont;
-    using CallableObjType = std::function<void(BufferCont&)>;
+    using CallableObjType = std::function<void(typename WaveOut<T>::BufferCont&)>;
 
-    WaveOutCO( int Device, size_t Channels, size_t SampleCount, uint32_t SamplesPerSec,
-               CallableObjType Callback )
-      : WaveOut<T>( Device, Channels, SampleCount, SamplesPerSec )
+    WaveOutCO( int Device, size_t Channels, size_t SampleCount, size_t BlockCount,
+               uint32_t SamplesPerSec, CallableObjType Callback )
+      : WaveOut<T>( Device, Channels, SampleCount, BlockCount, SamplesPerSec )
       , callback_{ Callback }
     {
     }
 protected:
-    virtual void DoCallback( BufferCont& WaveData ) const override {
+    virtual void DoCallback( typename WaveOut<T>::BufferCont& WaveData ) const override {
         callback_( WaveData );
     }
 private:
@@ -79,11 +79,16 @@ private:
 };
 
 template<typename T>
-WaveOut<T>::WaveOut( int Device, size_t Channels, size_t SampleCount, uint32_t SamplesPerSec )
+WaveOut<T>::WaveOut( int Device, size_t Channels, size_t SampleCount,
+                     size_t BlockCount, uint32_t SamplesPerSec )
+    : blockCnt_{ BlockCount }, freeBlockCnt_{ BlockCount }
 {
+    waveData_.resize( BlockCount );
     for ( auto& WD : waveData_ ) {
         WD.resize( SampleCount );
     }
+
+    waveHeader_.resize( BlockCount );
 
     waveFormat_ = { 0 };
     waveFormat_.wFormatTag      = WAVE_FORMAT_PCM;
@@ -119,57 +124,17 @@ WaveOut<T>::~WaveOut()
 }
 //---------------------------------------------------------------------------
 
-https://gist.github.com/seungin/4779216eada24a5077ca1c5e857239ce
+// https://gist.github.com/seungin/4779216eada24a5077ca1c5e857239ce
 
 template<typename T>
 void WaveOut<T>::Start()
 {
-    stopReq_ = false;
-    stopped_ = false;
-
-    exitEvt_->ResetEvent();
-
-    for ( size_t Idx {} ; Idx < BufferCount ; ++Idx ) {
-        auto& WaveHdr = waveHeader_[Idx];
-        auto& WaveData = waveData_[Idx];
-        WaveHdr = { 0 };
-        WaveHdr.dwBufferLength = WaveData.size() * sizeof( SampleType );
-        WaveHdr.dwFlags        = 0;
-        WaveHdr.lpData         = reinterpret_cast<LPSTR>( WaveData.data() );
-        WaveHdr.dwUser         = Idx;
-
-        if ( ::waveOutPrepareHeader( waveHandle_, &WaveHdr, sizeof WaveHdr ) ) {
-            RaiseLastOSError();
-        }
-    }
-
-    for ( auto& WaveHdr : waveHeader_ ) {
-        if ( ::waveInAddBuffer( waveHandle_, &WaveHdr, sizeof WaveHdr ) ) {
-            RaiseLastOSError();
-        }
-    }
-
-    if ( ::waveInStart( waveHandle_ ) ) {
-        RaiseLastOSError();
-    }
 }
 //---------------------------------------------------------------------------
 
 template<typename T>
 void WaveOut<T>::Stop()
 {
-    if ( !stopped_ ) {
-        stopReq_ = true;
-        ::WaitForSingleObject( reinterpret_cast<HANDLE>( exitEvt_->Handle ), INFINITE );
-        ::waveOutReset( waveHandle_ );
-        for ( auto& WaveHdr : waveHeader_ ) {
-            if ( ::waveOutUnprepareHeader( waveHandle_, &WaveHdr, sizeof WaveHdr ) ) {
-                RaiseLastOSError();
-            }
-        }
-        ::waveOutClose( waveHandle_ );
-        stopped_ = true;
-    }
 }
 //---------------------------------------------------------------------------
 
@@ -183,22 +148,8 @@ void WaveOut<T>::WaveOutProc( HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance,
         case WOM_OPEN:
             break;
         case WOM_DONE:
-                if ( This->stopReq_ ) {
-                    This->exitEvt_->SetEvent();
-                }
-                else {
-                    /*
-                    if ( auto const Hdr = reinterpret_cast<WAVEHDR *>( dwParam1 ) ) {
-                        if ( DWORD BytesRecorded = Hdr->dwBytesRecorded ) {
-                            auto const BufferNo = Hdr->dwUser;
-
-                            auto& WaveData = This->waveData_[BufferNo];
-                            This->DoCallback( WaveData );
-                            //::waveOutAddBuffer( This->waveHandle_, Hdr, sizeof *Hdr );
-                        }
-                    }
-                    */
-                }
+            if ( auto const Hdr = reinterpret_cast<WAVEHDR *>( dwParam1 ) ) {
+            }
             break;
         case WOM_CLOSE:
             break;
