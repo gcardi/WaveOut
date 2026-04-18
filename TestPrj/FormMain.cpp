@@ -3,9 +3,9 @@
 #include <vcl.h>
 #pragma hdrstop
 
-#include <cmath>
 #include <cstdint>
 #include <limits>
+#include <algorithm>
 
 #include "FormMain.h"
 
@@ -23,31 +23,10 @@ __fastcall TfrmMain::TfrmMain(TComponent* Owner)
 }
 //---------------------------------------------------------------------------
 
-class Gen {
-public:
-    Gen( float f, size_t sps )
-      : f_{ f }, d_{ 1.0F / static_cast<float>( sps ) } {}
-    float operator()() const {
-        auto out = sin( 2.0 * M_PI * f_ * t_ );
-        t_ = fmod( t_ + d_, static_cast<float>( 2.0 * M_PI ) );
-        return out;
-    }
-private:
-    float f_;
-    mutable float t_ {};
-    float d_;
-};
-
-static constexpr size_t bs = 1024;
-static constexpr size_t sps = 22050;
-
-Gen g( 440.0F, sps );
-float st {};
-
 void __fastcall TfrmMain::actStartExecute(TObject *Sender)
 {
     //
-
+    Caption = Format( _D( "Sample Rate = %d" ), sps );
 
     wo_ =
         make_unique<WaveOutType>(
@@ -57,24 +36,27 @@ void __fastcall TfrmMain::actStartExecute(TObject *Sender)
             8,          // size_t BlockCount
             sps,        // uint32_t SamplesPerSec
             // CallableObjType Callback
-            []( auto& Buffer ) {
+            [this]( auto& Buffer ) {
                 //Buffer[0] = 10;
                 for ( auto& Sample : Buffer ) {
                     using SampleType = WaveOutType::SampleType;
                     Sample =
                         static_cast<SampleType>(
                             static_cast<float>( std::numeric_limits<SampleType>::max() ) *
-                            g()
+                            g_()
                         );
                 }
             }
         );
+    wo_->Start();
 
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TfrmMain::EnabledIfStopped(TObject *Sender)
 {
+    auto& Act = static_cast<TAction&>( *Sender );
+    Act.Enabled = !wo_;
 //
 }
 //---------------------------------------------------------------------------
@@ -88,7 +70,52 @@ void __fastcall TfrmMain::actStopExecute(TObject *Sender)
 
 void __fastcall TfrmMain::EnabledIfRunning(TObject *Sender)
 {
-//
+    auto& Act = static_cast<TAction&>( *Sender );
+    Act.Enabled = !!wo_;
+}
+//---------------------------------------------------------------------------
+
+float TfrmMain::GetSineGenFreq() const
+{
+    return trackbarSineGenFreq->Position;
+}
+//---------------------------------------------------------------------------
+
+void TfrmMain::SetSineGenFreq( float Val )
+{
+    Val =
+        std::clamp(
+            Val,
+            static_cast<float>( trackbarSineGenFreq->Min ),
+            static_cast<float>( trackbarSineGenFreq->Max )
+        );
+    //trackbarSineGenFreq->Position = Val;
+    g_.SetFreq( Val );
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::trackbarSineGenFreqChange(TObject *Sender)
+{
+    SineGenFreq = trackbarSineGenFreq->Position;
+}
+//---------------------------------------------------------------------------
+
+float TfrmMain::GetSineGenVol() const
+{
+    return trackbarSineGenVol->Position / 100.0F;
+}
+//---------------------------------------------------------------------------
+
+void TfrmMain::SetSineGenVol( float Val )
+{
+    Val = std::clamp( Val, 0.0F, 1.0F );
+    g_.SetLevel( Val );
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::trackbarSineGenVolChange(TObject *Sender)
+{
+    SineGenVol = trackbarSineGenVol->Position / 100.0F;
 }
 //---------------------------------------------------------------------------
 

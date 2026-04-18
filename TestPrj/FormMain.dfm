@@ -27,6 +27,53 @@ object frmMain: TfrmMain
     Action = actStop
     TabOrder = 1
   end
+  object groupboxSineGen: TGroupBox
+    Left = 24
+    Top = 96
+    Width = 297
+    Height = 113
+    Caption = 'Sine Gen'
+    TabOrder = 2
+    object lblSineGenVol: TLabel
+      Left = 17
+      Top = 27
+      Width = 40
+      Height = 15
+      Alignment = taRightJustify
+      Caption = 'Volume'
+    end
+    object lblSineGenFreq: TLabel
+      Left = 34
+      Top = 75
+      Width = 23
+      Height = 15
+      Alignment = taRightJustify
+      Caption = 'Freq'
+    end
+    object trackbarSineGenVol: TTrackBar
+      Left = 64
+      Top = 24
+      Width = 225
+      Height = 45
+      Max = 100
+      Frequency = 5
+      Position = 50
+      TabOrder = 0
+      OnChange = trackbarSineGenVolChange
+    end
+    object trackbarSineGenFreq: TTrackBar
+      Left = 64
+      Top = 72
+      Width = 225
+      Height = 45
+      Max = 10000
+      Min = 20
+      Frequency = 500
+      Position = 440
+      TabOrder = 1
+      OnChange = trackbarSineGenFreqChange
+    end
+  end
   object ActionManager1: TActionManager
     Left = 376
     Top = 32
