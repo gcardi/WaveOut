@@ -74,6 +74,92 @@ object frmMain: TfrmMain
       OnChange = trackbarSineGenFreqChange
     end
   end
+  object groupboxFMGen: TGroupBox
+    Left = 336
+    Top = 96
+    Width = 273
+    Height = 209
+    Caption = 'FM Gen'
+    TabOrder = 3
+    object lblFMGenVol: TLabel
+      Left = 9
+      Top = 27
+      Width = 40
+      Height = 15
+      Alignment = taRightJustify
+      Caption = 'Volume'
+    end
+    object lblFMGenCarrierFreq: TLabel
+      Left = 14
+      Top = 75
+      Width = 35
+      Height = 15
+      Alignment = taRightJustify
+      Caption = 'Carrier'
+    end
+    object lblFMGenModFreq: TLabel
+      Left = 15
+      Top = 123
+      Width = 34
+      Height = 15
+      Alignment = taRightJustify
+      Caption = 'Mod F'
+    end
+    object lblFMGenModIndex: TLabel
+      Left = 18
+      Top = 171
+      Width = 31
+      Height = 15
+      Alignment = taRightJustify
+      Caption = 'Mod I'
+    end
+    object trackbarFMGenVol: TTrackBar
+      Left = 56
+      Top = 24
+      Width = 209
+      Height = 45
+      Max = 100
+      Frequency = 5
+      Position = 50
+      TabOrder = 0
+      OnChange = trackbarFMGenVolChange
+    end
+    object trackbarFMGenCarrierFreq: TTrackBar
+      Left = 56
+      Top = 72
+      Width = 209
+      Height = 45
+      Max = 10000
+      Min = 20
+      Frequency = 500
+      Position = 440
+      TabOrder = 1
+      OnChange = trackbarFMGenCarrierFreqChange
+    end
+    object trackbarFMGenModFreq: TTrackBar
+      Left = 56
+      Top = 120
+      Width = 209
+      Height = 45
+      Max = 5000
+      Min = 1
+      Frequency = 250
+      Position = 220
+      TabOrder = 2
+      OnChange = trackbarFMGenModFreqChange
+    end
+    object trackbarFMGenModIndex: TTrackBar
+      Left = 56
+      Top = 168
+      Width = 209
+      Height = 45
+      Max = 100
+      Frequency = 5
+      Position = 20
+      TabOrder = 3
+      OnChange = trackbarFMGenModIndexChange
+    end
+  end
   object ActionManager1: TActionManager
     Left = 376
     Top = 32

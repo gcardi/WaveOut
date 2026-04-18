@@ -36,12 +36,25 @@ __published:	// IDE-managed Components
     TLabel *lblSineGenVol;
     TLabel *lblSineGenFreq;
     TTrackBar *trackbarSineGenFreq;
+    TGroupBox *groupboxFMGen;
+    TLabel *lblFMGenVol;
+    TLabel *lblFMGenCarrierFreq;
+    TLabel *lblFMGenModFreq;
+    TLabel *lblFMGenModIndex;
+    TTrackBar *trackbarFMGenVol;
+    TTrackBar *trackbarFMGenCarrierFreq;
+    TTrackBar *trackbarFMGenModFreq;
+    TTrackBar *trackbarFMGenModIndex;
     void __fastcall actStartExecute(TObject *Sender);
     void __fastcall EnabledIfStopped(TObject *Sender);
     void __fastcall actStopExecute(TObject *Sender);
     void __fastcall EnabledIfRunning(TObject *Sender);
     void __fastcall trackbarSineGenFreqChange(TObject *Sender);
     void __fastcall trackbarSineGenVolChange(TObject *Sender);
+    void __fastcall trackbarFMGenVolChange(TObject *Sender);
+    void __fastcall trackbarFMGenCarrierFreqChange(TObject *Sender);
+    void __fastcall trackbarFMGenModFreqChange(TObject *Sender);
+    void __fastcall trackbarFMGenModIndexChange(TObject *Sender);
 private:	// User declarations
     using WaveOutType = App::WaveOutCO<int16_t>;
     using WaveOutPtr = std::unique_ptr<WaveOutType>;
@@ -51,8 +64,9 @@ private:	// User declarations
     //static constexpr size_t sps = 22050;
     size_t const sps = WaveOutType::GetDefaultSampleRate();
 
-    SineGen g_{ this->SineGenFreq, sps };
-    //FMGen g_{ 440.0F, 20.0F, 2.0F, sps };
+    SineGen sineGen_{ this->SineGenFreq, sps, this->SineGenVol };
+    FMGen fmGen_{ this->FMGenCarrierFreq, this->FMGenModFreq,
+                  this->FMGenModIndex, sps, this->FMGenVol };
 
     float GetSineGenFreq() const;
     void SetSineGenFreq( float Val );
@@ -60,8 +74,24 @@ private:	// User declarations
     float GetSineGenVol() const;
     void SetSineGenVol( float Val );
 
+    float GetFMGenVol() const;
+    void SetFMGenVol( float Val );
+
+    float GetFMGenCarrierFreq() const;
+    void SetFMGenCarrierFreq( float Val );
+
+    float GetFMGenModFreq() const;
+    void SetFMGenModFreq( float Val );
+
+    float GetFMGenModIndex() const;
+    void SetFMGenModIndex( float Val );
+
     __property float SineGenFreq = { read = GetSineGenFreq, write = SetSineGenFreq };
     __property float SineGenVol = { read = GetSineGenVol, write = SetSineGenVol };
+    __property float FMGenVol = { read = GetFMGenVol, write = SetFMGenVol };
+    __property float FMGenCarrierFreq = { read = GetFMGenCarrierFreq, write = SetFMGenCarrierFreq };
+    __property float FMGenModFreq = { read = GetFMGenModFreq, write = SetFMGenModFreq };
+    __property float FMGenModIndex = { read = GetFMGenModIndex, write = SetFMGenModIndex };
 public:		// User declarations
     __fastcall TfrmMain(TComponent* Owner);
 };
