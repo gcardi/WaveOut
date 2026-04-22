@@ -6,6 +6,8 @@
 #include <cmath>
 #include <atomic>
 
+#include "SineTable.h"
+
 class FMGen {
 public:
     FMGen( float carrierFreq, float modulatorFreq, float modIndex,
@@ -25,8 +27,8 @@ public:
         auto const dC = dPhaseC_.load( std::memory_order_relaxed );
         auto const dM = dPhaseM_.load( std::memory_order_relaxed );
         auto const lvl = level_.load( std::memory_order_relaxed );
-        auto const mod = mi * std::sin( phaseM_ );
-        auto const out = lvl * std::sin( phaseC_ + mod );
+        auto const mod = mi * SineLUT::Get( phaseM_ );
+        auto const out = lvl * SineLUT::Get( phaseC_ + mod );
         phaseC_ = std::fmod( phaseC_ + dC,
                              static_cast<float>( 2.0 * M_PI ) );
         phaseM_ = std::fmod( phaseM_ + dM,

@@ -6,6 +6,8 @@
 #include <cmath>
 #include <atomic>
 
+#include "SineTable.h"
+
 class SineGen {
 public:
     SineGen( float f, size_t sps, float level = 1.0F )
@@ -19,7 +21,7 @@ public:
     float operator()() const {
         auto const dP = dPhase_.load( std::memory_order_relaxed );
         auto const lvl = level_.load( std::memory_order_relaxed );
-        auto const out = lvl * std::sin( phase_ );
+        auto const out = lvl * SineLUT::Get( phase_ );
         phase_ = std::fmod( phase_ + dP,
                             static_cast<float>( 2.0 * M_PI ) );
         return out;
