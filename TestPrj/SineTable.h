@@ -19,6 +19,7 @@
 #define SineTableH
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 
 namespace SineLUT {
@@ -28,9 +29,9 @@ constexpr std::size_t TableSize = 4096;
 static_assert( ( TableSize & ( TableSize - 1 ) ) == 0,
                "TableSize must be a power of two (bit-mask index wrap)." );
 
-constexpr float Pi     = M_PI; //3.14159265358979323846f;
-constexpr float TwoPi  = 2.0f * Pi;
-constexpr float HalfPi = 0.5f * Pi;
+constexpr float Pi     = static_cast<float>( M_PI );
+constexpr float TwoPi  = 2.0f * Pi;                    // no M_2PI in POSIX
+constexpr float HalfPi = static_cast<float>( M_PI_2 );
 
 using TableStorage = std::array<float, TableSize>;
 
