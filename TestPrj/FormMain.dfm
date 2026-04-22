@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
   Left = 0
   Top = 0
-  Caption = 'frmMain'
+  Caption = '\'
   ClientHeight = 441
   ClientWidth = 624
   Color = clBtnFace
