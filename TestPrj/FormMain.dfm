@@ -1,7 +1,7 @@
 object frmMain: TfrmMain
   Left = 0
   Top = 0
-  Caption = '\'
+  Caption = 'Wave Out Test'
   ClientHeight = 441
   ClientWidth = 624
   Color = clBtnFace
