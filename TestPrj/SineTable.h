@@ -18,6 +18,7 @@
 #ifndef SineTableH
 #define SineTableH
 
+#include <array>
 #include <cstddef>
 
 namespace SineLUT {
@@ -31,12 +32,7 @@ constexpr float Pi     = M_PI; //3.14159265358979323846f;
 constexpr float TwoPi  = 2.0f * Pi;
 constexpr float HalfPi = 0.5f * Pi;
 
-// Thin wrapper around a C array so its subscript operator is usable in
-// constant expressions under C++14 (std::array's non-const operator[] only
-// becomes constexpr in C++17).
-struct TableStorage {
-    float data[TableSize];
-};
+using TableStorage = std::array<float, TableSize>;
 
 // Constexpr sine via range reduction + Taylor series (6 terms, up to x^11).
 // Accurate to ~1e-7 over the full circle, which is below float precision.
@@ -67,7 +63,7 @@ constexpr float GenerateSample( std::size_t i ) {
 constexpr TableStorage CreateTable() {
     TableStorage t = {};
     for ( std::size_t i = 0; i < TableSize; ++i ) {
-        t.data[i] = GenerateSample( i );
+        t[i] = GenerateSample( i );
     }
     return t;
 }
@@ -94,7 +90,7 @@ inline float Get( float phase ) {
     std::size_t const i0   = iInt & IndexMask;
     std::size_t const i1   = ( i0 + 1 ) & IndexMask;
     float       const frac = idx - static_cast<float>( iInt );
-    return Table.data[i0] * ( 1.0f - frac ) + Table.data[i1] * frac;
+    return Table[i0] * ( 1.0f - frac ) + Table[i1] * frac;
 }
 
 } // namespace SineLUT
