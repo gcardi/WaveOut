@@ -42,27 +42,51 @@ A thin wrapper that accepts a `std::function<void(BufferCont&)>` in its construc
 
 ## Demo application (`TestPrj/`)
 
-The demo is a VCL (Visual Component Library) application built with C++ Builder. It demonstrates real-time audio synthesis by mixing two generators and allowing live parameter control from the GUI.
+The demo is a VCL (Visual Component Library) application built with C++ Builder. It demonstrates real-time audio synthesis by mixing three generators, displays the output level on a graphical meter, and allows live parameter control from the GUI.
 
 ### Generators
 
-- **`SineGen`** — a simple sine wave oscillator using a phase accumulator. Parameters: frequency (Hz) and level (0.0–1.0).
-- **`FMGen`** — an FM (Frequency Modulation) synthesis generator. The output follows the classic FM equation: $y = \text{level} \cdot \sin(\phi_c + I \cdot \sin(\phi_m))$, where $\phi_c$ and $\phi_m$ are the accumulated carrier and modulator phases, and $I$ is the modulation index. Parameters: carrier frequency, modulator frequency, modulation index, and level.
+- **`SineGen`** — a sine wave oscillator driven by a phase accumulator. Samples are read from a compile-time sine LUT (see [SineLUT](#sinelut)) with linear interpolation between entries. Parameters: frequency (Hz) and level (0.0–1.0).
+- **`FMGen`** — an FM (Frequency Modulation) synthesis generator that also reads from the same LUT. The output follows the classic FM equation: $y = \text{level} \cdot \sin(\phi_c + I \cdot \sin(\phi_m))$, where $\phi_c$ and $\phi_m$ are the accumulated carrier and modulator phases, and $I$ is the modulation index. Parameters: carrier frequency, modulator frequency, modulation index, and level.
+- **`WhiteNoiseGen`** — a fast white-noise generator. A 32-bit xorshift PRNG produces the sequence (three shift/XOR pairs per sample, period $2^{32}-1$). The 32-bit word is converted to a float in $[-1, 1)$ without any division or int-to-float conversion: `std::bit_cast` builds an IEEE-754 float in $[1, 2)$ from (sign=0, exponent=127, random 23-bit mantissa), then `2f - 3` maps it to $[-1, 1)$. Parameter: level (0.0–1.0).
 
-Both generators use `std::atomic<float>` with relaxed memory ordering for all tuneable parameters, making them safe to adjust from the GUI (VCL main thread) while the audio callback runs on the multimedia thread — no mutex, no blocking, no priority inversion.
+All three generators use `std::atomic<float>` with relaxed memory ordering for their tuneable parameters, so they can be adjusted from the GUI (VCL main thread) while the audio callback runs on the multimedia thread — no mutex, no blocking, no priority inversion.
+
+### SineLUT
+
+`SineTable.h` defines a 4096-entry sine lookup table in the `SineLUT` namespace. The table is populated at compile time through a `constexpr` factory using a 6-term Taylor-series approximation with range reduction — this is needed because `std::sin` isn't `constexpr` before C++26, and the Clang shipped with C++Builder 13 doesn't accept `__builtin_sinf` in constant expressions. The result lives in read-only program memory, making the same code suitable for MCU targets (the companion STM32Gen project shares the technique). At runtime, `SineGen` and `FMGen` index the table with a phase accumulator and linearly interpolate between adjacent entries.
+
+### Level meter
+
+`FrameLevelMeter` is a reusable VCL `TFrame` that renders a vertical peak-level bar driven by GDI+. The frame:
+
+- Converts the incoming linear value to dB (`Utils.h::PitchDet::dBToValue` / `ValueTodB`) and maps it onto a configurable `HiLim_dB` / `LoLim_dB` range (defaults: 0 dB / −96 dB).
+- Caches a gradient-filled background bitmap and an optional scale bitmap, repainting only the "on" and "off" regions on each update.
+- Uses an internal `TTimer` to decay a peak-hold marker.
+
+The audio callback tracks the per-buffer peak in an `std::atomic<float>`; a UI timer in the main form loads that value and writes it to the meter's `Value` property. `GdiPlusUtils` (see below) provides the GDI+ initialisation scope and conversion helpers.
+
+### GdiPlusUtils
+
+`GdiPlusUtils.{h,cpp}` is a small helper layer around the Windows GDI+ C++ API:
+
+- `GdiPlusSessionManager` — RAII wrapper around `GdiplusStartup` / `GdiplusShutdown`. Instantiate one at application scope.
+- `EGdiplusException` / `GdiplusCheck` — exception type and helper that turns a non-OK `Gdiplus::Status` into a VCL `Exception` with a human-readable message.
+- Conversion helpers: `TColorToGdiplusColor` (with and without alpha), `AlignmentToGdiplusStringAlignment`, `VerticalAlignmentToGdiplusStringAlignment`, `VCLRectToGdiPlusRectF`.
+- `LoadImage`, `DrawImage` (with optional stretching / aspect preservation), and `GetEncoderClsid` for codec lookup.
 
 ### GUI layout
 
-The form contains two group boxes with trackbar controls:
+The form contains three generator group boxes plus the level meter:
 
-| Sine Gen | FM Gen |
-|---|---|
-| Volume (0–100%) | Volume (0–100%) |
-| Frequency (20–10000 Hz) | Carrier Frequency (20–10000 Hz) |
-| | Modulator Frequency (1–5000 Hz) |
-| | Modulation Index (0.0–10.0) |
+| Sine Gen | FM Gen | White Noise Gen | Level Meter |
+|---|---|---|---|
+| Volume (0–100%) | Volume (0–100%) | Volume (0–100%) | Peak meter (dB) |
+| Frequency (20–10000 Hz) | Carrier Frequency (20–10000 Hz) | | |
+| | Modulator Frequency (1–5000 Hz) | | |
+| | Modulation Index (0.0–10.0) | | |
 
-The two generators are mixed with equal weight (`0.5 * (sineGen + fmGen)`) in the audio callback, and each generator's individual volume trackbar controls its relative contribution.
+The three generators are mixed with equal weight in the audio callback — `(1/3) * (sineGen + fmGen + whiteNoiseGen)` — and each generator's individual volume trackbar controls its relative contribution. The callback also tracks the per-buffer peak absolute sample in `peakLevel_` (relaxed atomic); a UI timer (`tmrLevel`) reads that value and writes it to the level meter frame.
 
 **Start** and **Stop** buttons control playback. The window title displays the detected native sample rate.
 
