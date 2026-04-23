@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <algorithm>
+#include <cmath>
 
 #include "FormMain.h"
 
@@ -13,6 +14,7 @@ using std::make_unique;
 
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
+#pragma link "FrameLevelMeter"
 #pragma resource "*.dfm"
 TfrmMain *frmMain;
 //---------------------------------------------------------------------------
@@ -37,20 +39,23 @@ void __fastcall TfrmMain::actStartExecute(TObject *Sender)
             sps,        // uint32_t SamplesPerSec
             // CallableObjType Callback
             [this]( auto& Buffer ) {
+                float bufferPeak = 0.0F;
                 for ( auto& Sample : Buffer ) {
                     using SampleType = WaveOutType::SampleType;
                     auto const mix = ( 1.0F / 3.0F ) *
                                      ( sineGen_() + fmGen_() + whiteNoiseGen_() );
+                    bufferPeak = std::max( bufferPeak, std::fabs( mix ) );
                     Sample =
                         static_cast<SampleType>(
                             static_cast<float>( std::numeric_limits<SampleType>::max() ) *
                             mix
                         );
                 }
+                peakLevel_.store( bufferPeak, std::memory_order_relaxed );
             }
         );
     wo_->Start();
-
+    tmrLevel->Enabled = true;
 }
 //---------------------------------------------------------------------------
 
@@ -64,8 +69,10 @@ void __fastcall TfrmMain::EnabledIfStopped(TObject *Sender)
 
 void __fastcall TfrmMain::actStopExecute(TObject *Sender)
 {
-//
+    tmrLevel->Enabled = false;
     wo_.reset();
+    peakLevel_.store( 0.0F, std::memory_order_relaxed );
+    frmeLevelMeter1->Reset();
 }
 //---------------------------------------------------------------------------
 
@@ -222,6 +229,12 @@ void TfrmMain::SetWhiteNoiseGenVol( float Val )
 void __fastcall TfrmMain::trackbarWhiteNoiseGenVolChange(TObject *Sender)
 {
     WhiteNoiseGenVol = trackbarWhiteNoiseGenVol->Position / 100.0F;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::tmrLevelTimer(TObject *Sender)
+{
+    frmeLevelMeter1->Value = peakLevel_.load( std::memory_order_relaxed );
 }
 //---------------------------------------------------------------------------
 

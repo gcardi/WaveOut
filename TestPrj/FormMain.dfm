@@ -2,8 +2,8 @@ object frmMain: TfrmMain
   Left = 0
   Top = 0
   Caption = 'Wave Out Test'
-  ClientHeight = 441
-  ClientWidth = 817
+  ClientHeight = 509
+  ClientWidth = 784
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -185,6 +185,35 @@ object frmMain: TfrmMain
       TabOrder = 3
       OnChange = trackbarFMGenModIndexChange
     end
+  end
+  inline frmeLevelMeter1: TfrmeLevelMeter
+    Left = 648
+    Top = 64
+    Width = 41
+    Height = 240
+    DoubleBuffered = True
+    Color = clBtnFace
+    ParentBackground = False
+    ParentColor = False
+    ParentDoubleBuffered = False
+    TabOrder = 5
+    ExplicitLeft = 648
+    ExplicitTop = 64
+    ExplicitWidth = 41
+    inherited PaintBox1: TPaintBox
+      Width = 35
+      ExplicitLeft = 3
+      ExplicitTop = 3
+      ExplicitWidth = 70
+      ExplicitHeight = 234
+    end
+  end
+  object tmrLevel: TTimer
+    Enabled = False
+    Interval = 33
+    OnTimer = tmrLevelTimer
+    Left = 448
+    Top = 32
   end
   object ActionManager1: TActionManager
     Left = 376

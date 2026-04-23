@@ -13,7 +13,10 @@
 #include <Vcl.ActnMan.hpp>
 #include <Vcl.PlatformDefaultStyleActnCtrls.hpp>
 #include <Vcl.ComCtrls.hpp>
+#include <Vcl.ExtCtrls.hpp>
+#include "FrameLevelMeter.h"
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 
@@ -49,6 +52,8 @@ __published:	// IDE-managed Components
     TGroupBox *groupboxWhiteNoiseGen;
     TLabel *lblWhiteNoiseGenVol;
     TTrackBar *trackbarWhiteNoiseGenVol;
+	TfrmeLevelMeter *frmeLevelMeter1;
+    TTimer *tmrLevel;
     void __fastcall actStartExecute(TObject *Sender);
     void __fastcall EnabledIfStopped(TObject *Sender);
     void __fastcall actStopExecute(TObject *Sender);
@@ -60,6 +65,7 @@ __published:	// IDE-managed Components
     void __fastcall trackbarFMGenModFreqChange(TObject *Sender);
     void __fastcall trackbarFMGenModIndexChange(TObject *Sender);
     void __fastcall trackbarWhiteNoiseGenVolChange(TObject *Sender);
+    void __fastcall tmrLevelTimer(TObject *Sender);
 private:	// User declarations
     using WaveOutType = App::WaveOutCO<int16_t>;
     using WaveOutPtr = std::unique_ptr<WaveOutType>;
@@ -73,6 +79,10 @@ private:	// User declarations
     FMGen fmGen_{ this->FMGenCarrierFreq, this->FMGenModFreq,
                   this->FMGenModIndex, sps, this->FMGenVol };
     WhiteNoiseGen whiteNoiseGen_{ 0x12345678u, this->WhiteNoiseGenVol };
+
+    // Peak absolute output sample per audio buffer (linear, 0..1).
+    // Audio thread: store relaxed. UI timer: load relaxed + write to meter.
+    std::atomic<float> peakLevel_ {};
 
     float GetSineGenFreq() const;
     void SetSineGenFreq( float Val );
