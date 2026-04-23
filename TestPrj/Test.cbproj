@@ -196,6 +196,10 @@
             <DependentOn>SineGen.h</DependentOn>
             <BuildOrder>4</BuildOrder>
         </CppCompile>
+        <CppCompile Include="WhiteNoiseGen.cpp">
+            <DependentOn>WhiteNoiseGen.h</DependentOn>
+            <BuildOrder>6</BuildOrder>
+        </CppCompile>
         <CppCompile Include="Test.cpp">
             <BuildOrder>0</BuildOrder>
         </CppCompile>
