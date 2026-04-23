@@ -3,7 +3,7 @@ object frmMain: TfrmMain
   Top = 0
   Caption = 'Wave Out Test'
   ClientHeight = 441
-  ClientWidth = 624
+  ClientWidth = 817
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -74,13 +74,39 @@ object frmMain: TfrmMain
       OnChange = trackbarSineGenFreqChange
     end
   end
+  object groupboxWhiteNoiseGen: TGroupBox
+    Left = 24
+    Top = 224
+    Width = 297
+    Height = 81
+    Caption = 'White Noise Gen'
+    TabOrder = 3
+    object lblWhiteNoiseGenVol: TLabel
+      Left = 17
+      Top = 27
+      Width = 40
+      Height = 15
+      Alignment = taRightJustify
+      Caption = 'Volume'
+    end
+    object trackbarWhiteNoiseGenVol: TTrackBar
+      Left = 64
+      Top = 24
+      Width = 225
+      Height = 45
+      Max = 100
+      Frequency = 5
+      TabOrder = 0
+      OnChange = trackbarWhiteNoiseGenVolChange
+    end
+  end
   object groupboxFMGen: TGroupBox
     Left = 336
     Top = 96
     Width = 273
     Height = 209
     Caption = 'FM Gen'
-    TabOrder = 3
+    TabOrder = 4
     object lblFMGenVol: TLabel
       Left = 9
       Top = 27

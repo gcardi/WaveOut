@@ -19,6 +19,7 @@
 
 #include "SineGen.h"
 #include "FMGen.h"
+#include "WhiteNoiseGen.h"
 #include "WaveOut.h"
 
 //---------------------------------------------------------------------------
@@ -45,6 +46,9 @@ __published:	// IDE-managed Components
     TTrackBar *trackbarFMGenCarrierFreq;
     TTrackBar *trackbarFMGenModFreq;
     TTrackBar *trackbarFMGenModIndex;
+    TGroupBox *groupboxWhiteNoiseGen;
+    TLabel *lblWhiteNoiseGenVol;
+    TTrackBar *trackbarWhiteNoiseGenVol;
     void __fastcall actStartExecute(TObject *Sender);
     void __fastcall EnabledIfStopped(TObject *Sender);
     void __fastcall actStopExecute(TObject *Sender);
@@ -55,6 +59,7 @@ __published:	// IDE-managed Components
     void __fastcall trackbarFMGenCarrierFreqChange(TObject *Sender);
     void __fastcall trackbarFMGenModFreqChange(TObject *Sender);
     void __fastcall trackbarFMGenModIndexChange(TObject *Sender);
+    void __fastcall trackbarWhiteNoiseGenVolChange(TObject *Sender);
 private:	// User declarations
     using WaveOutType = App::WaveOutCO<int16_t>;
     using WaveOutPtr = std::unique_ptr<WaveOutType>;
@@ -67,6 +72,7 @@ private:	// User declarations
     SineGen sineGen_{ this->SineGenFreq, sps, this->SineGenVol };
     FMGen fmGen_{ this->FMGenCarrierFreq, this->FMGenModFreq,
                   this->FMGenModIndex, sps, this->FMGenVol };
+    WhiteNoiseGen whiteNoiseGen_{ 0x12345678u, this->WhiteNoiseGenVol };
 
     float GetSineGenFreq() const;
     void SetSineGenFreq( float Val );
@@ -86,12 +92,16 @@ private:	// User declarations
     float GetFMGenModIndex() const;
     void SetFMGenModIndex( float Val );
 
+    float GetWhiteNoiseGenVol() const;
+    void SetWhiteNoiseGenVol( float Val );
+
     __property float SineGenFreq = { read = GetSineGenFreq, write = SetSineGenFreq };
     __property float SineGenVol = { read = GetSineGenVol, write = SetSineGenVol };
     __property float FMGenVol = { read = GetFMGenVol, write = SetFMGenVol };
     __property float FMGenCarrierFreq = { read = GetFMGenCarrierFreq, write = SetFMGenCarrierFreq };
     __property float FMGenModFreq = { read = GetFMGenModFreq, write = SetFMGenModFreq };
     __property float FMGenModIndex = { read = GetFMGenModIndex, write = SetFMGenModIndex };
+    __property float WhiteNoiseGenVol = { read = GetWhiteNoiseGenVol, write = SetWhiteNoiseGenVol };
 public:		// User declarations
     __fastcall TfrmMain(TComponent* Owner);
 };

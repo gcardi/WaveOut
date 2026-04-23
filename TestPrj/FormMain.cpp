@@ -39,7 +39,8 @@ void __fastcall TfrmMain::actStartExecute(TObject *Sender)
             [this]( auto& Buffer ) {
                 for ( auto& Sample : Buffer ) {
                     using SampleType = WaveOutType::SampleType;
-                    auto const mix = 0.5F * ( sineGen_() + fmGen_() );
+                    auto const mix = ( 1.0F / 3.0F ) *
+                                     ( sineGen_() + fmGen_() + whiteNoiseGen_() );
                     Sample =
                         static_cast<SampleType>(
                             static_cast<float>( std::numeric_limits<SampleType>::max() ) *
@@ -202,6 +203,25 @@ void __fastcall TfrmMain::trackbarFMGenModFreqChange(TObject *Sender)
 void __fastcall TfrmMain::trackbarFMGenModIndexChange(TObject *Sender)
 {
     FMGenModIndex = trackbarFMGenModIndex->Position / 10.0F;
+}
+//---------------------------------------------------------------------------
+
+float TfrmMain::GetWhiteNoiseGenVol() const
+{
+    return trackbarWhiteNoiseGenVol->Position / 100.0F;
+}
+//---------------------------------------------------------------------------
+
+void TfrmMain::SetWhiteNoiseGenVol( float Val )
+{
+    Val = std::clamp( Val, 0.0F, 1.0F );
+    whiteNoiseGen_.SetLevel( Val );
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TfrmMain::trackbarWhiteNoiseGenVolChange(TObject *Sender)
+{
+    WhiteNoiseGenVol = trackbarWhiteNoiseGenVol->Position / 100.0F;
 }
 //---------------------------------------------------------------------------
 
