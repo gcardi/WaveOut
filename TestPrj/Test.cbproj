@@ -6,7 +6,7 @@
         <AppType>Application</AppType>
         <MainSource>Test.cpp</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win64x</Platform>
         <TargetedPlatforms>1048579</TargetedPlatforms>
         <ProjectName Condition="'$(ProjectName)'==''">Test</ProjectName>
@@ -192,13 +192,20 @@
             <DependentOn>FormMain.h</DependentOn>
             <BuildOrder>2</BuildOrder>
         </CppCompile>
+        <CppCompile Include="FrameLevelMeter.cpp">
+            <Form>frmeLevelMeter</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+            <DependentOn>FrameLevelMeter.h</DependentOn>
+            <BuildOrder>7</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="GdiPlusUtils.cpp">
+            <DependentOn>GdiPlusUtils.h</DependentOn>
+            <BuildOrder>6</BuildOrder>
+        </CppCompile>
         <CppCompile Include="SineGen.cpp">
             <DependentOn>SineGen.h</DependentOn>
             <BuildOrder>4</BuildOrder>
-        </CppCompile>
-        <CppCompile Include="WhiteNoiseGen.cpp">
-            <DependentOn>WhiteNoiseGen.h</DependentOn>
-            <BuildOrder>6</BuildOrder>
         </CppCompile>
         <CppCompile Include="Test.cpp">
             <BuildOrder>0</BuildOrder>
@@ -212,6 +219,7 @@
             <BuildOrder>3</BuildOrder>
         </None>
         <FormResources Include="FormMain.dfm"/>
+        <FormResources Include="FrameLevelMeter.dfm"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -306,16 +314,15 @@
                     </Platform>
                 </DeployFile>
                 <DeployFile LocalName=".\Win32\Debug\Test.exe" Configuration="Debug" Class="ProjectOutput"/>
-                <DeployFile LocalName=".\Win32\Debug\Test.tds" Configuration="Debug" Class="DebugSymbols"/>
                 <DeployFile LocalName=".\Win64x\Debug\Test.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64x">
                         <RemoteName>Test.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName=".\Win64x\Debug\Test.pdb" Configuration="Debug" Class="DebugSymbols">
+                <DeployFile LocalName=".\Win64x\Release\Test.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win64x">
-                        <RemoteName>Test.pdb</RemoteName>
+                        <RemoteName>Test.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
